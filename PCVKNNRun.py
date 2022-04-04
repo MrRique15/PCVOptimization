@@ -51,12 +51,12 @@ def knn(matriz,origem):
     distanciaTotal = 0;
     distancia = 0;
     melhorDestino = 0;
-    numerosUsados = [];
+    shortestPath = [];
     contador = 0;
     origemInicial = origem;
     while matriz[origem][2] == 0:
         contador = contador + 1;
-        numerosUsados.append(origem);
+        shortestPath.append(origem);
         matriz[origem][2] = 1;
         distanciaInicial = 2147483647;
         iterado = 0;
@@ -75,7 +75,37 @@ def knn(matriz,origem):
             if iterado != 0:
                 distanciaTotal = distanciaTotal + distanciaInicial;
                 origem = melhorDestino;
-    return distanciaTotal, numerosUsados;
+    return distanciaTotal, shortestPath;
+
+def farAway(matriz,origem):
+    distanciaTotal = 0;
+    distancia = 0;
+    maiorDestino = 0;
+    longestPath = [];
+    contador = 0;
+    origemInicial = origem;
+    while matriz[origem][2] == 0:
+        contador = contador + 1;
+        longestPath.append(origem);
+        matriz[origem][2] = 1;
+        distanciaInicial = 0;
+        iterado = 0;
+        if contador == len(matriz):
+            distancia = math.sqrt((matriz[origem][0] - matriz[origemInicial][0])**2 + (matriz[origem][1] - matriz[origemInicial][1])**2);
+            distanciaTotal = distanciaTotal + distancia;
+        else:
+            for i in range(0, len(matriz)):
+                if i != origem:
+                    if matriz[i][2] == 0:
+                        distancia = math.sqrt((matriz[origem][0] - matriz[i][0])**2 + (matriz[origem][1] - matriz[i][1])**2);
+                        if distancia > distanciaInicial:
+                            distanciaInicial = distancia;
+                            maiorDestino = i;
+                            iterado = 1;
+            if iterado != 0:
+                distanciaTotal = distanciaTotal + distanciaInicial;
+                origem = maiorDestino;
+    return distanciaTotal, longestPath;
 
 def cost_change(matriz, n1, n2, n3, n4):
     dist13 = math.sqrt((matriz[n1][0] - matriz[n3][0])**2 + (matriz[n1][1] - matriz[n3][1])**2);
@@ -101,6 +131,25 @@ def two_opt(route,matriz):
         route = best;
     return best;
 
+# def three_opt(route,distancia,matriz):
+#     improved = True;
+#     while improved:
+#         best = distancia;
+#         size = len(route);
+#         improved = False;
+
+#         for i in route[0:size-5]:
+#             for j in route[i+2:size-3]:
+#                 for k in route[j+2:size-1]:
+#                     for ex in range(7):
+#                         path, gain = exchange(route, ex, i, j, k);
+
+#                         if gain > 0:
+#                             best -= gain;
+#                             route = path;
+#                             improved = True;
+                            
+
 def calcula_distancia(rota,matriz):
     distanciaTotal = 0;
     for i in range(0, len(rota)):
@@ -121,13 +170,30 @@ def main():
     linhas = infos["DIMENSION"];
     vertices = geraMatriz(linhas, colunas);
     infos["NODE_COORD_SECTION"] = ColetaCoordenadas(vertices);
+    
+    #KNN + TWO-OPT
     distanciaPercorrida,route = knn(infos["NODE_COORD_SECTION"],0);
     best_route = two_opt(route,infos["NODE_COORD_SECTION"]);
     best_distance = calcula_distancia(best_route,infos["NODE_COORD_SECTION"]);
-    if best_distance < distanciaPercorrida:
-        print(round(best_distance,2));
-    else:
-        print(round(distanciaPercorrida,2));
+    # if best_distance < distanciaPercorrida:
+    #     print(round(best_distance,2));
+    # else:
+    #     print(round(distanciaPercorrida,2));
+    
+    
+    for i in range(0, len(infos["NODE_COORD_SECTION"])):
+        infos["NODE_COORD_SECTION"][i][2] = 0;
+        
+    #FAR-AWAY + TWO-OPT 
+    distanciaPercorrida2,longestPath = farAway(infos["NODE_COORD_SECTION"],0);
+    best_route2 = two_opt(longestPath,infos["NODE_COORD_SECTION"]);
+    # best_route3 = three_opt(longestPath,distanciaPercorrida2,infos["NODE_COORD_SECTION"]);
+    best_distance2 = calcula_distancia(best_route2,infos["NODE_COORD_SECTION"]);
+    print("Distancia percorrida KNN: ",distanciaPercorrida);
+    print("Distancia percorrida TWO-OPT KNN: ",best_distance);
+    print("Distancia percorrida FarAway: ",distanciaPercorrida2);
+    print("Distancia percorrida TWO-OPT FarAway: ",best_distance2);
+    
     
 if __name__ == "__main__":
     main();
