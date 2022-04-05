@@ -131,33 +131,89 @@ def two_opt(route,matriz):
         route = best;
     return best;
 
-# def three_opt(route,distancia,matriz):
-#     improved = True;
-#     while improved:
-#         best = distancia;
-#         size = len(route);
-#         improved = False;
+def distance_nodes(matriz,n1,n2):
+    if n1 == n2:
+        return 0;
+    return math.sqrt((matriz[n1][0] - matriz[n2][0])**2 + (matriz[n1][1] - matriz[n2][1])**2);
 
-#         for i in route[0:size-5]:
-#             for j in route[i+2:size-3]:
-#                 for k in route[j+2:size-1]:
-#                     for ex in range(7):
-#                         path, gain = exchange(route, ex, i, j, k);
+def exchange(path, execute, a, c, e, matriz):
+    b, d, f = a + 1, c + 1, e + 1;
 
-#                         if gain > 0:
-#                             best -= gain;
-#                             route = path;
-#                             improved = True;
-                            
+    p_a, p_b, p_c, p_d, p_e, p_f = [path[i] for i in (a, b, c, d, e, f)];
+
+    base = distance_nodes(matriz, p_a, p_b) + distance_nodes(matriz, p_c, p_d) + distance_nodes(matriz, p_e, p_f);
+
+    if execute == 0:
+        # 2-opt (a, e) [d, c] (b, f)
+        sol = path[:a + 1] + path[e:d - 1:-1] + path[c:b - 1:-1] + path[f:]
+        gain = distance_nodes(matriz, p_a, p_e) + distance_nodes(matriz, p_c, p_d) + distance_nodes(matriz, p_b, p_f)
+    elif execute == 1:
+        # 2-opt [a, b] (c, e) (d, f)
+        sol = path[:a + 1] + path[b:c + 1] + path[e:d - 1:-1] + path[f:]
+        gain = distance_nodes(matriz, p_a, p_b) + distance_nodes(matriz, p_c, p_e) + distance_nodes(matriz, p_d, p_f)
+    elif execute == 2:
+        # 2-opt (a, c) (b, d) [e, f]
+        sol = path[:a + 1] + path[c:b - 1:-1] + path[d:e + 1] + path[f:]
+        gain = distance_nodes(matriz, p_a, p_c) + distance_nodes(matriz, p_b, p_d) + distance_nodes(matriz, p_e, p_f)
+    elif execute == 3:
+        # 3-opt (a, d) (e, c) (b, f)
+        sol = path[:a + 1] + path[d:e + 1] + path[c:b - 1:-1] + path[f:]
+        gain = distance_nodes(matriz, p_a, p_d) + distance_nodes(matriz, p_e, p_c) + distance_nodes(matriz, p_b, p_f)
+    elif execute == 4:
+        # 3-opt (a, d) (e, b) (c, f)
+        sol = path[:a + 1] + path[d:e + 1] + path[b:c + 1] + path[f:]
+        gain = distance_nodes(matriz, p_a, p_d) + distance_nodes(matriz, p_e, p_b) + distance_nodes(matriz, p_c, p_f)
+    elif execute == 5:
+        # 3-opt (a, e) (d, b) (c, f)
+        sol = path[:a + 1] + path[e:d - 1:-1] + path[b:c + 1] + path[f:]
+        gain = distance_nodes(matriz, p_a, p_e) + distance_nodes(matriz, p_d, p_b) + distance_nodes(matriz, p_c, p_f)
+    elif execute == 6:
+        # 3-opt (a, c) (b, e) (d, f)
+        sol = path[:a + 1] + path[c:b - 1:-1] + path[e:d - 1:-1] + path[f:]
+        gain = distance_nodes(matriz, p_a, p_c) + distance_nodes(matriz, p_b, p_e) + distance_nodes(matriz, p_d, p_f)
+
+    return sol, base - gain
+
+def three_optSwap(route,size,matriz):
+    saved = None
+    bestChange = 0
+    for a in range(size - 5):
+        for c in range(a + 2, size - 3):
+            for e in range(c + 2, size - 1):
+                change = 0
+                for i in range(7):
+                    path, change = exchange(route, i, a, c, e, matriz);
+                    if change > bestChange:
+                        saved = a, c, e, i
+                        bestChange = change
+                        return saved, bestChange
+    return saved, bestChange
+
+def three_opt(route,distancia,matriz):
+    print("Iniciando 3-opt");
+    bestPath = route;
+    size = len(route);
+    bestChange = 1;
+    while bestChange > 0:
+        print("Fazendo bestChange!");
+        print("Distancia: ", distancia);
+        saved, bestChange = three_optSwap(bestPath, size, matriz);
+        if bestChange > 0:
+            a, c, e, which = saved;
+            bestPath, change = exchange(bestPath, which, a, c, e, matriz);
+            distancia -= change;
+    print(bestPath);
+    print(distancia);
+    return bestPath, distancia;                       
 
 def calcula_distancia(rota,matriz):
     distanciaTotal = 0;
     for i in range(0, len(rota)):
         if i == len(rota)-1:
-            distancia = math.sqrt((matriz[rota[i]][0] - matriz[rota[0]][0])**2 + (matriz[rota[i]][1] - matriz[rota[0]][1])**2);
+            distancia = distance_nodes(matriz, rota[i], rota[0]);
             distanciaTotal += distancia;
         else:
-            distancia = math.sqrt((matriz[rota[i]][0] - matriz[rota[i+1]][0])**2 + (matriz[rota[i]][1] - matriz[rota[i+1]][1])**2);
+            distancia = distance_nodes(matriz, rota[i], rota[i+1]);
             distanciaTotal += distancia;
     return distanciaTotal;
 
@@ -171,29 +227,22 @@ def main():
     vertices = geraMatriz(linhas, colunas);
     infos["NODE_COORD_SECTION"] = ColetaCoordenadas(vertices);
     
-    #KNN + TWO-OPT
-    distanciaPercorrida,route = knn(infos["NODE_COORD_SECTION"],0);
-    best_route = two_opt(route,infos["NODE_COORD_SECTION"]);
-    best_distance = calcula_distancia(best_route,infos["NODE_COORD_SECTION"]);
-    # if best_distance < distanciaPercorrida:
-    #     print(round(best_distance,2));
-    # else:
-    #     print(round(distanciaPercorrida,2));
-    
-    
+    #------------------ KNN + TWO-OPT ------------------#
+    distanciaInicial_knn,rotaInicial_knn = knn(infos["NODE_COORD_SECTION"],0);
+    best_route_two = two_opt(rotaInicial_knn,infos["NODE_COORD_SECTION"]);
+    best_distance_knnTwo = calcula_distancia(best_route_two,infos["NODE_COORD_SECTION"]);
+
+    # ------------------ Reset para os visitados ------------------#
     for i in range(0, len(infos["NODE_COORD_SECTION"])):
         infos["NODE_COORD_SECTION"][i][2] = 0;
         
-    #FAR-AWAY + TWO-OPT 
-    distanciaPercorrida2,longestPath = farAway(infos["NODE_COORD_SECTION"],0);
-    best_route2 = two_opt(longestPath,infos["NODE_COORD_SECTION"]);
-    # best_route3 = three_opt(longestPath,distanciaPercorrida2,infos["NODE_COORD_SECTION"]);
-    best_distance2 = calcula_distancia(best_route2,infos["NODE_COORD_SECTION"]);
-    print("Distancia percorrida KNN: ",distanciaPercorrida);
-    print("Distancia percorrida TWO-OPT KNN: ",best_distance);
-    print("Distancia percorrida FarAway: ",distanciaPercorrida2);
-    print("Distancia percorrida TWO-OPT FarAway: ",best_distance2);
-    
+    #------------------ FAR-AWAY + THREE-OPT ------------------#
+    distanciaInicial_far,rotaInicial_far = farAway(infos["NODE_COORD_SECTION"],0);
+    best_route_three, best_distance_farThree = three_opt(rotaInicial_far,distanciaInicial_far,infos["NODE_COORD_SECTION"]);
+
+    # ------------------ Print Informações FInais ------------------#
+    print("Distancia percorrida KNN + 2-OPT: ",best_distance_knnTwo);
+    print("Distancia percorrida FarAway + 3-OPT: ",best_distance_farThree);
     
 if __name__ == "__main__":
     main();
