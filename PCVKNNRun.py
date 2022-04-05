@@ -215,7 +215,6 @@ def calcula_distancia(rota,matriz):
     return distanciaTotal;
 
 def main():
-    start = time.time();
     colunas = 3;
     infos = {};
     infos = coletaDadosEntrada(infos);
@@ -224,7 +223,7 @@ def main():
     linhas = infos["DIMENSION"];
     vertices = geraMatriz(linhas, colunas);
     infos["NODE_COORD_SECTION"] = ColetaCoordenadas(vertices);
-    
+    start = time.time();
     #------------------ KNN + THREE-OPT ------------------#
     distanciaInicial_knn,rotaInicial_knn = knn(infos["NODE_COORD_SECTION"],0);
     best_route_two = two_opt(rotaInicial_knn,infos["NODE_COORD_SECTION"]);
