@@ -190,20 +190,15 @@ def three_optSwap(route,size,matriz):
     return saved, bestChange
 
 def three_opt(route,distancia,matriz):
-    print("Iniciando 3-opt");
     bestPath = route;
     size = len(route);
     bestChange = 1;
     while bestChange > 0:
-        print("Fazendo bestChange!");
-        print("Distancia: ", distancia);
         saved, bestChange = three_optSwap(bestPath, size, matriz);
         if bestChange > 0:
             a, c, e, which = saved;
             bestPath, change = exchange(bestPath, which, a, c, e, matriz);
             distancia -= change;
-    print(bestPath);
-    print(distancia);
     return bestPath, distancia;                       
 
 def calcula_distancia(rota,matriz):
@@ -241,6 +236,8 @@ def main():
     best_route_three, best_distance_farThree = three_opt(rotaInicial_far,distanciaInicial_far,infos["NODE_COORD_SECTION"]);
 
     # ------------------ Print Informações FInais ------------------#
+    best_distance_knnTwo = round(best_distance_knnTwo,2);
+    best_distance_farThree = round(best_distance_farThree,2);
     print("Distancia percorrida KNN + 2-OPT: ",best_distance_knnTwo);
     print("Distancia percorrida FarAway + 3-OPT: ",best_distance_farThree);
     
