@@ -1,4 +1,5 @@
 import math;
+import time;
 
 def geraMatriz(linhas, colunas):
     matriz = [];
@@ -184,6 +185,7 @@ def three_optSwap(route,size,matriz):
                 for i in range(7):
                     path, change = exchange(route, i, a, c, e, matriz);
                     if change > bestChange:
+                        print("Best change: ", change);
                         saved = a, c, e, i
                         bestChange = change
                         return saved, bestChange
@@ -213,6 +215,7 @@ def calcula_distancia(rota,matriz):
     return distanciaTotal;
 
 def main():
+    start = time.time();
     colunas = 3;
     infos = {};
     infos = coletaDadosEntrada(infos);
@@ -222,7 +225,7 @@ def main():
     vertices = geraMatriz(linhas, colunas);
     infos["NODE_COORD_SECTION"] = ColetaCoordenadas(vertices);
     
-    #------------------ KNN + TWO-OPT ------------------#
+    #------------------ KNN + THREE-OPT ------------------#
     distanciaInicial_knn,rotaInicial_knn = knn(infos["NODE_COORD_SECTION"],0);
     best_route_two = two_opt(rotaInicial_knn,infos["NODE_COORD_SECTION"]);
     best_distance_knnTwo = calcula_distancia(best_route_two,infos["NODE_COORD_SECTION"]);
@@ -231,15 +234,17 @@ def main():
     for i in range(0, len(infos["NODE_COORD_SECTION"])):
         infos["NODE_COORD_SECTION"][i][2] = 0;
         
-    #------------------ FAR-AWAY + THREE-OPT ------------------#
+    #------------------ FAR-AWAY + TWO-OPT ------------------#
     distanciaInicial_far,rotaInicial_far = farAway(infos["NODE_COORD_SECTION"],0);
     best_route_three, best_distance_farThree = three_opt(rotaInicial_far,distanciaInicial_far,infos["NODE_COORD_SECTION"]);
 
     # ------------------ Print Informações FInais ------------------#
     best_distance_knnTwo = round(best_distance_knnTwo,2);
     best_distance_farThree = round(best_distance_farThree,2);
-    print("Distancia percorrida KNN + 2-OPT: ",best_distance_knnTwo);
-    print("Distancia percorrida FarAway + 3-OPT: ",best_distance_farThree);
+    print("Distancia percorrida Nearest + 2-OPT (Alg1):",best_distance_knnTwo);
+    print("Distancia percorrida FarAway + 3-OPT (Alg2): ",best_distance_farThree);
+    end = time.time();
+    print("Execution Time: ",end - start,"s");
     
 if __name__ == "__main__":
     main();
